@@ -15,6 +15,14 @@
       "types": "./dist/index.d.ts"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aperdomoll90/csv-conductor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/aperdomoll90/csv-conductor/issues"
+  },
+  "homepage": "https://github.com/aperdomoll90/csv-conductor#readme",
   "files": [
     "dist"
   ],
