@@ -1,0 +1,38 @@
+{
+  "name": "csv-conductor",
+  "version": "0.1.0",
+  "description": "Rule-driven CSV generator with ordered columns and type-safe schemas.",
+  "author": "Adrian Perdomo Llerena",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm,cjs --clean",
+    "dev": "tsup src/index.ts --dts --format esm,cjs --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "csv",
+    "export",
+    "rules",
+    "schema",
+    "typescript",
+    "generator"
+  ],
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  }
+}
