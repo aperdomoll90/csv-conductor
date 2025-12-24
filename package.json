@@ -24,7 +24,9 @@
   },
   "homepage": "https://github.com/aperdomoll90/csv-conductor#readme",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs --clean",
