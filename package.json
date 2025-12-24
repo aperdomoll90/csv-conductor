@@ -1,6 +1,6 @@
 {
   "name": "csv-conductor",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Rule-driven CSV generator with ordered columns and type-safe schemas.",
   "author": "Adrian Perdomo Llerena",
   "license": "MIT",
@@ -15,7 +15,7 @@
       "require": "./dist/index.cjs"
     }
   },
-    "repository": {
+  "repository": {
     "type": "git",
     "url": "git+https://github.com/aperdomoll90/csv-conductor.git"
   },
