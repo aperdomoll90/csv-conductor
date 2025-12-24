@@ -1,39 +1,26 @@
-# 🚀 csv-conductor
+# csv-conductor
 
-**csv-conductor** is a modern, lightweight CSV generation utility for Node and browser environments.  
-It gives you full control over **column order**, **custom headers**, **computed fields**, and **per-column formatting rules**—all with zero dependencies and full TypeScript support.
+A lightweight, type-safe CSV generation utility for Node and browser environments.
 
-Perfect for exporting data from APIs, admin dashboards, forms, spreadsheets, CRM systems, ecommerce orders, and more.
-
----
-
-## ✨ Features
-
-- **Ordered Columns** – Output always follows your defined order.
-- **Custom Headers & Labels** – Map internal field names to readable column labels.
-- **Computed Columns** – Insert static values or derive data for a column.
-- **Per-Column Rules** – Transform, sanitize, or validate values before output.
-- **Excel Friendly** – Optional UTF-8 BOM for Microsoft Excel compatibility.
-- **Works in Node & Browser** – Fully portable and lightweight.
-- **No Dependencies** – Tiny, clean, and tree-shakable.
-- **TypeScript First** – Strong types for rows, keys, and rules.
+Control column order, map field names to headers, add computed columns, and format values—all with zero dependencies and full TypeScript support.
 
 ---
 
-## 🛠️ Technologies
+## Features
 
-- **TypeScript** – Type-safe development
-- **ESM + CJS Output** – Works in any modern tooling setup
-- **Zero Dependencies**
-
-**Requirements:**
-
-- Node.js 14+
-- Works in Browser or Server environments
+- **Ordered Columns** – Output follows your defined header order
+- **Field-to-Header Mapping** – Map internal field names to readable column labels
+- **Static & Computed Columns** – Insert constant values or derive data per row
+- **Per-Column Formatting** – Transform values before output (dates, booleans, etc.)
+- **Browser Download** – Built-in helper with File System Access API support
+- **Excel Friendly** – UTF-8 BOM for Microsoft Excel compatibility
+- **Works in Node & Browser** – Fully portable and lightweight
+- **No Dependencies** – Tiny, clean, and tree-shakable
+- **TypeScript First** – Strong types for rows, rules, and formatters
 
 ---
 
-## ⚙️ Installation
+## Installation
 
 ```bash
 npm install csv-conductor
@@ -43,174 +30,212 @@ yarn add csv-conductor
 
 ---
 
-## 🚀 Usage
+## Quick Start
 
 ```ts
-import { generateCsv, type OrderIndicator } from 'csv-conductor'
+import { generateCSV, downloadCSV } from 'csv-conductor'
 
 type User = {
   first_name: string
   last_name: string
-  email?: string
+  email: string
   active: boolean
 }
 
-const order: OrderIndicator<User> = [
-  { key: 'first_name', header: 'First Name' },
-  { key: 'last_name', header: 'Last Name' },
-  { compute: () => 'USA', header: 'Country' },
-  {
-    key: 'active',
-    header: 'Subscription',
-    rules: [({ raw }) => (raw ? 'checked' : '')],
+// 1. Map your data fields to header labels
+const fieldLabelMap = {
+  first_name: 'First Name',
+  last_name: 'Last Name',
+  email: 'Email',
+  active: 'Status',
+}
+
+// 2. Define column order using header labels
+const orderedHeaders = ['First Name', 'Last Name', 'Email', 'Country', 'Status']
+
+// 3. Your data
+const users: User[] = [
+  { first_name: 'Ada', last_name: 'Lovelace', email: 'ada@example.com', active: true },
+  { first_name: 'Grace', last_name: 'Hopper', email: 'grace@example.com', active: false },
+]
+
+// 4. Generate CSV with rules for static/computed columns and formatting
+const csv = generateCSV(users, fieldLabelMap, orderedHeaders, {
+  staticByHeader: {
+    Country: 'USA', // constant value
   },
-]
-
-const rows: User[] = [
-  { first_name: 'Ada', last_name: 'Lovelace', active: true },
-  { first_name: 'Grace', last_name: 'Hopper', active: false },
-]
-
-const csv = generateCsv(rows, order)
+  formatByHeader: {
+    Status: (value) => (value ? 'Active' : 'Inactive'),
+  },
+})
 
 console.log(csv)
 ```
 
-✅ Output:
+Output:
 
 ```
-First Name,Last Name,Country,Subscription
-"Ada","Lovelace","USA","checked"
-"Grace","Hopper","USA",""
+"First Name","Last Name","Email","Country","Status"
+"Ada","Lovelace","ada@example.com","USA","Active"
+"Grace","Hopper","grace@example.com","USA","Inactive"
 ```
 
 ---
 
-## 🔧 Configuration API
+## API
 
-### `generateCsv<T>(rows, order, options?)`
+### `generateCSV<T>(rows, fieldLabelMap, orderedHeaderLabels, rules?)`
 
-| Option       | Type                | Default  | Description                  |        |                                                |
-| ------------ | ------------------- | -------- | ---------------------------- | ------ | ---------------------------------------------- |
-| `delimiter`  | `string`            | `','`    | Column separator             |        |                                                |
-| `quote`      | `'"'                | "'"      | null`                        | `'\"'` | How cells are quoted (`null` disables quoting) |
-| `eol`        | `string`            | `'\n'`   | Line break (`\n` or `\r\n`)  |        |                                                |
-| `includeBOM` | `boolean`           | `true`   | Prepends BOM for Excel       |        |                                                |
-| `stringify`  | `(value) => string` | built-in | Custom serializer for values |        |                                                |
+Generates a CSV string from your data.
 
-### Column Types
+| Parameter             | Type                   | Description                                      |
+| --------------------- | ---------------------- | ------------------------------------------------ |
+| `rows`                | `T[]`                  | Array of data objects                            |
+| `fieldLabelMap`       | `Record<string, string>` | Maps object keys to header labels              |
+| `orderedHeaderLabels` | `string[]`             | Header labels in desired column order            |
+| `rules`               | `ICsvRulesProps<T>`    | Optional static values and formatters            |
 
-✅ **Keyed Column** (maps directly to object field)
-
-```ts
-{ key: 'email', header: 'Email' }
-```
-
-✅ **Computed Column**
+#### Rules Object
 
 ```ts
-{ compute: () => 'USA', header: 'Country' }
-```
+type ICsvRulesProps<T> = {
+  // For headers NOT mapped to a field, provide a constant or computed value
+  staticByHeader?: Record<string, string | number | boolean | Date | null | ((row: T) => unknown)>
 
-✅ **Column Rules** (sanitize, transform, format)
-
-```ts
-{
-  key: 'active',
-  header: 'Active',
-  rules: [({ raw }) => raw ? 'yes' : 'no']
+  // Per-header formatter, runs after value is resolved
+  formatByHeader?: Record<string, (value: unknown, row: T) => string>
 }
 ```
 
-✅ **Default Values**
+---
+
+### `downloadCSV(content, fileName)`
+
+Downloads a CSV string as a file in the browser.
+
+| Parameter  | Type     | Description                    |
+| ---------- | -------- | ------------------------------ |
+| `content`  | `string` | The CSV string to download     |
+| `fileName` | `string` | Suggested filename (e.g. `"export.csv"`) |
+
+Returns `Promise<boolean>` – `true` if download succeeded, `false` if canceled or failed.
 
 ```ts
-{ key: 'email', header: 'Email', defaultValue: 'n/a' }
+import { generateCSV, downloadCSV } from 'csv-conductor'
+
+const csv = generateCSV(data, fieldMap, headers)
+const success = await downloadCSV(csv, 'users-export.csv')
+
+if (success) {
+  console.log('Downloaded!')
+}
+```
+
+**Browser support:**
+- Uses File System Access API when available (shows native save dialog)
+- Falls back to anchor download for older browsers
+- Automatically adds UTF-8 BOM for Excel compatibility
+
+---
+
+### `sanitizeCsvValue(value)`
+
+Utility to escape and quote a single value for CSV output.
+
+```ts
+import { sanitizeCsvValue } from 'csv-conductor'
+
+sanitizeCsvValue('Hello "World"') // → '"Hello ""World"""'
+sanitizeCsvValue(null)            // → '""'
 ```
 
 ---
 
-## 🧪 Example With Rules
+## Examples
+
+### Static and Computed Columns
 
 ```ts
-import { generateCsv } from 'csv-conductor'
+const csv = generateCSV(users, fieldLabelMap, headers, {
+  staticByHeader: {
+    // Constant value for all rows
+    'Source': 'Web Import',
 
-const trim =
-  () =>
-  ({ value }: any) =>
-    value.trim()
-const asChecked =
-  () =>
-  ({ raw }: any) =>
-    raw ? 'checked' : ''
+    // Computed value per row
+    'Full Name': (row) => `${row.first_name} ${row.last_name}`,
+  },
+})
+```
 
-const order = [
-  { key: 'name', header: 'Name', rules: [trim()] },
-  { compute: () => 'USA', header: 'Country' },
-  { key: 'active', header: 'Active', rules: [asChecked()] },
-]
+### Formatting Values
 
-const csv = generateCsv(
-  [
-    { name: ' Ada ', active: true },
-    { name: 'Grace ', active: false },
-  ],
-  order
-)
+```ts
+const csv = generateCSV(orders, fieldLabelMap, headers, {
+  formatByHeader: {
+    // Boolean to text
+    'Paid': (value) => value ? 'Yes' : 'No',
 
-console.log(csv)
+    // Date formatting
+    'Created At': (value) => new Date(value as string).toLocaleDateString(),
+
+    // Currency
+    'Total': (value) => `$${(value as number).toFixed(2)}`,
+  },
+})
+```
+
+### Combining Static Values and Formatters
+
+```ts
+const csv = generateCSV(rows, fieldLabelMap, headers, {
+  staticByHeader: {
+    'Export Date': () => new Date().toISOString(),
+  },
+  formatByHeader: {
+    'Active': (val) => val ? 'checked' : '',
+  },
+})
 ```
 
 ---
 
-## 🧭 Roadmap
+## Types
 
-### ✅ Already Implemented
-
-- Ordered CSV columns
-- Custom headers / labels
-- Computed column values
-- Per-column rules
-- Default/fallback values
-- Excel-friendly UTF-8 BOM
-- Works in Node & Browser
-- TypeScript definitions
-- Zero dependencies
-
-### 🚧 Planned Features
-
-- [ ] Built-in formatting helpers (dates, masking, currency)
-- [ ] Mapping tables / enum formatters
-- [ ] Strict validation modes
-- [ ] Streaming output for very large datasets
-- [ ] Async rule support for external lookups
+```ts
+import type {
+  IRowProps,           // Record<string, unknown> - base row type
+  IFieldLabelMapProps, // Record<string, string> - field to label mapping
+  ICsvRulesProps,      // Rules for static values and formatters
+} from 'csv-conductor'
+```
 
 ---
 
-## 🤝 Contributing
+## Requirements
+
+- Node.js 14+ or modern browser
+- TypeScript 4.5+ (for types)
+
+---
+
+## Contributing
 
 PRs and issues welcome!
 
 1. Fork the repo
-2. Create a branch:
-
-   ```bash
-   git checkout -b feature/myFeature
-   ```
-
+2. Create a branch: `git checkout -b feature/my-feature`
 3. Commit changes
-4. Push your branch
-5. Open a Pull Request
+4. Push and open a Pull Request
 
 ---
 
-## 📄 License
+## License
 
-MIT License.
+MIT
 
 ---
 
-## 📞 Contact
+## Author
 
 **Adrian Perdomo**
 GitHub: [aperdomoll90/csv-conductor](https://github.com/aperdomoll90/csv-conductor)
